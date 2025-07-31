@@ -38,6 +38,7 @@ export default function ChatSearch({ messages, setMessages, timestampedSubtitles
             setDisabled(true);
             setMessages((prevMessages) => [...prevMessages, searchQuery, ""]);
             setSearchQuery("");
+            performance.mark("masterPrompt-start");
             if (model == 'chrome-built-in') {
                 try {
                     const sessionIdString = await masterPromptSession.prompt(searchQuery);
@@ -51,6 +52,11 @@ export default function ChatSearch({ messages, setMessages, timestampedSubtitles
                     if (Number.isNaN(promptSessionId) || promptSessionId >= subtitleChunkArray.length) {
                         promptSessionId = 0;
                     }
+                    performance.mark("masterPrompt-end");
+                    performance.measure("masterPrompt-duration", "masterPrompt-start", "masterPrompt-end");
+                    console.log(`masterPrompt time elapsed: ${performance.getEntriesByName('masterPrompt-duration')[0].duration.toFixed(2)} ms`);
+                    
+                    performance.mark("generatePromptSession-start");
                     let session = promptSessionArray[promptSessionId];
                     if (!session) {
                         session = await generatePromptSession(subtitleChunkArray[promptSessionId]);
@@ -64,7 +70,13 @@ export default function ChatSearch({ messages, setMessages, timestampedSubtitles
                         UpdatedQuery,
                         handleStreamResponse
                     );
-
+                    performance.mark("generatePromptSession-end");
+                    performance.measure("generatePromptSession-first-token", "generatePromptSession-start", "generatePromptSession-first");
+                    performance.measure("generatePromptSession-duration", "generatePromptSession-start", "generatePromptSession-end");
+                    console.log(`generatePromptSession fir token time elapsed: ${performance.getEntriesByName('generatePromptSession-first-token')[0].duration.toFixed(2)} ms`);
+                    console.log(`generatePromptSession time elapsed: ${performance.getEntriesByName('generatePromptSession-duration')[0].duration.toFixed(2)} ms`);
+                    performance.clearMarks();
+                    performance.clearMeasures();
                 } catch (error) {
                     console.log("Error in handleSearch:", error);
                 }

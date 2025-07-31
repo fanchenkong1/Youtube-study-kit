@@ -42,7 +42,10 @@ export default function ChatScreen({ currentSearch }) {
 
     async function initiateChromePromptSession(videoSubTitles) {
         try {
+            console.log("setChromePromptSessionLoading true", performance.now());
+            performance.mark("initiateChromePromptSession-start");
             setChromePromptSessionLoading(true);
+            console.time("handleSubtitles");
             const rawCompleteSubtitles = videoSubTitles.subtitiles.map((subtitleObject) => ({
                 text: subtitleObject.text,
                 offset: parseInt(subtitleObject.offset),
@@ -57,8 +60,11 @@ export default function ChatScreen({ currentSearch }) {
                 }
                 return { text: translatedText, offset: subtitleObject.offset };
             }));
+            console.timeEnd("handleSubtitles");
 
+            console.time("getkeywords-sessions");
             const { keywordMap, subtitleChunkArray } = await generateKeywordMap(completeSubtitlesArray, currentSearch);
+            console.timeEnd("getkeywords-sessions");
             setPromptSessionArray({});
             setSubtitleChunkArray(subtitleChunkArray);
             console.log("keywordMap", keywordMap);
@@ -100,9 +106,11 @@ export default function ChatScreen({ currentSearch }) {
 
             console.log("master Prompt", masterPrompt);
             try {
+                console.time("mastersession");
                 const MasterSession = await window?.LanguageModel?.create({
                     initialPrompts: [{ role: "system", content: masterPrompt }]
                 });
+                console.timeEnd("mastersession");
                 setMasterPromptSession(MasterSession);
                 console.log("Master Session:", MasterSession);
             } catch (error) {
@@ -112,6 +120,10 @@ export default function ChatScreen({ currentSearch }) {
         } catch (error) {
             console.error("Error initiating prompt sessions:", error); // More specific error message
         } finally {
+            performance.mark("initiateChromePromptSession-end");
+            performance.measure("initiateChromePromptSession-duration", "initiateChromePromptSession-start", "initiateChromePromptSession-end");
+                    console.log(`initiateChromePromptSession time elapsed: ${performance.getEntriesByName('initiateChromePromptSession-duration')[0].duration.toFixed(2)} ms`);
+            console.log("setChromePromptSessionLoading false", performance.now());
             setChromePromptSessionLoading(false);
         }
     }
