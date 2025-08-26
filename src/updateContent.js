@@ -13,6 +13,7 @@ async function generateAndStoreKeywordsForVideo(videoId) {
     }
     keywordsGenerating[videoId] = true;
     try {
+        const subtitles = await getSubTitles(videoId);
         const result = await chrome.storage.local.get([`keywords_${videoId}`]);
         if (result[`keywords_${videoId}`]) {
             keywordsGenerating[videoId] = false;
@@ -22,7 +23,7 @@ async function generateAndStoreKeywordsForVideo(videoId) {
         //TODO: Check AI available
         //TODO: Check hash of subtitles
 
-        const subtitles = await getSubTitles(videoId);
+        // const subtitles = await getSubTitles(videoId);
         console.log(subtitles);
         if (subtitles && subtitles.text && subtitles.subtitles) {
             const rawCompleteSubtitles = subtitles.subtitles.map(subtitleObject => ({
