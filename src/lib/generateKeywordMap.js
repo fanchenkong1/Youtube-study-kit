@@ -27,16 +27,23 @@ export async function generateKeywordMap(completeSubtitlesArray, videoId) {
         try {
           const updatedSubtitleChunkPrompt =
             TrainingChromePrompt(subtitleChunk);
-          const session = await window?.LanguageModel?.create({
-            initialPrompts: [
-              {
-                role: "system",
-                content: updatedSubtitleChunkPrompt,
-              },
-            ],
+          // const session = await window?.LanguageModel?.create({
+          //   initialPrompts: [
+          //     {
+          //       role: "system",
+          //       content: updatedSubtitleChunkPrompt,
+          //     },
+          //   ],
+          // });
+          // keywords = await session.prompt(prompt);
+          // session.destroy();
+          const res = await chrome.runtime.sendMessage({ 
+            type: "PROMPT_GEMINI", 
+            initialPrompts: updatedSubtitleChunkPrompt,
+            prompt: prompt
           });
-          keywords = await session.prompt(prompt);
-          session.destroy();
+          keywords = res.keywords;
+          console.log(keywords);
           return keywords && keywords.trim() ? keywords.trim() : null;
         } catch (error) {
           console.log(error, "error in generating keywords");
@@ -205,6 +212,8 @@ export async function generatePromptSession(subtitleChunk) {
   const updatedSubtitleChunkPrompt = TrainingChromePrompt(subtitleChunk);
   const session = await window?.LanguageModel?.create({
     initialPrompts: [{ role: "system", content: updatedSubtitleChunkPrompt }],
+    temperature: 0.0,
+    topK: 3,
   });
   return session;
 }

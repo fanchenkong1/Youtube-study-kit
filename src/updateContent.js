@@ -31,10 +31,11 @@ async function generateAndStoreKeywordsForVideo(videoId) {
                 offset: parseInt(subtitleObject.offset)
             }));
 
-            const subtitlesLanguage = await detectLanguage(rawCompleteSubtitles[0].text);
-            if (subtitlesLanguage !== "en") {
-                return;
-            }
+            // const subtitlesLanguage = await detectLanguage(rawCompleteSubtitles[0].text);
+            // if (subtitlesLanguage !== "en") {
+            //     return;
+            // }
+            const subtitlesLanguage = "en"
 
             const { keywordMap, subtitleChunkArray } = await generateKeywordMap(rawCompleteSubtitles, videoId);
             console.log("keywordMap", keywordMap);
