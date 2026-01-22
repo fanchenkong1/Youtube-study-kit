@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      html, body { margin: 0; height: 100%; background: #000; }
+      iframe { width: 100%; height: 100%; border: 0; display: block; }
+    </style>
+  </head>
+  <body>
+    <iframe id="yt" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <script>
+      const p = new URLSearchParams(location.search);
+      const vid = p.get("vid");
+      const start = p.get("start") || "0";
+      const autoplay = p.get("autoplay") || "0";
+      const origin = location.origin;
+
+      const src =
+        `https://www.youtube.com/embed/${encodeURIComponent(vid)}` +
+        `?start=${encodeURIComponent(start)}` +
+        `&autoplay=${encodeURIComponent(autoplay)}` +
+        `&origin=${encodeURIComponent(origin)}`;
+
+      document.getElementById("yt").src = src;
+    </script>
+  </body>
+</html>
+

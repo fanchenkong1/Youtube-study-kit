@@ -1,5 +1,5 @@
 /* global chrome */
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { CircleArrowRight, ImagePlus, ImagePlusIcon, Link, NotebookPen, Trash2 } from 'lucide-react';
 import {
   Dialog,
@@ -59,6 +59,33 @@ export default function NotesIntract({ currentSearch, UserData }) {
     });
   };
 
+  const playableTimestamp = useMemo(() => {
+    const n = Number(currentTimestamp);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  }, [currentTimestamp]);
+
+  const hostedPlayerUrl = useMemo(() => {
+    // NOTE: Replace __PLAYER_HOST_URL__ with the HTTPS origin serving player.html
+    // Example: https://player.example.com
+    const base = "__PLAYER_HOST_URL__/player.html";
+
+    if (!currentSearch) return null;
+
+    if (base.startsWith("__PLAYER_HOST_URL__")) {
+      console.warn(
+        "[YouTube Study Kit] __PLAYER_HOST_URL__ is not configured. " +
+        "YouTube playback will not work."
+      );
+      return null;
+    }
+
+    const u = new URL(base);
+    u.searchParams.set("vid", currentSearch);
+    u.searchParams.set("start", String(playableTimestamp));
+    u.searchParams.set("autoplay", "1");
+    return u.toString();
+  }, [currentSearch, playableTimestamp]);
+
   const handleUpdate = () => {
     videoData.data[snapShotInfo.id].imgText = editedText;
     chrome.storage.local.set({ userData: UserData }).then(() => {
@@ -91,26 +118,30 @@ export default function NotesIntract({ currentSearch, UserData }) {
   return (
     <div className='text-white flex flex-col h-full mx-2'>
       {
-        snapShotInfo.id != -1 ?
-          (
-            <div className='rounded-md'>
-              {
-                notesMode ?
-                  <img src={videoData?.data[snapShotInfo.id]?.imgUrl || ""} alt={videoData?.data[snapShotInfo.id]?.imgText || ""} />
-                  :
-                  <iframe className='w-full aspect-[16/9]' src={`https://www.youtube.com/embed/${currentSearch}?start=${currentTimestamp}&autoplay=1`} allow="autoplay; encrypted-media" allowFullScreen></iframe>
-              }
+        snapShotInfo.id !== -1 ? (
+          <div className='rounded-md'>
+            {notesMode ? (
+              <img src={videoData?.data[snapShotInfo.id]?.imgUrl || ""} alt={videoData?.data[snapShotInfo.id]?.imgText || ""} />
+            ) : (
+              hostedPlayerUrl ? (
+                <iframe
+                  key={`${currentSearch}:${playableTimestamp}`}
+                  className="w-full aspect-[16/9]"
+                  src={hostedPlayerUrl}
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
+              ) : null
+            )}
+          </div>
+        ) : (
+          <div className='text-lg text-gray-400 border rounded-2xl flex-grow-[3] p-2 border-[#2f2f2f] flex items-center justify-center'>
+            <div className='flex flex-col items-center justify-center gap-1 cursor-pointer'>
+              <ImagePlus />
+              <p className='text-sm'>Add new notes</p>
             </div>
-          )
-          :
-          (
-            <div className='text-lg text-gray-400 border rounded-2xl flex-grow-[3] p-2 border-[#2f2f2f] flex items-center justify-center'>
-              <div className='flex flex-col items-center justify-center gap-1 cursor-pointer'>
-                <ImagePlus />
-                <p className='text-sm'>Add new notes</p>
-              </div>
-            </div>
-          )
+          </div>
+        )
       }
 
       {/* Title and Controls */}
